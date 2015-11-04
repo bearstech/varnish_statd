@@ -82,7 +82,7 @@ if __name__ == "__main__":
     import sys
     from collections import OrderedDict
 
-    if len(sys.argv) == 1:
+    if len(sys.argv) == 2:
         values = OrderedDict(sorted(stat().items()))
         for k, v in values.iteritems():
             print("%s: %i" % (k, v))

@@ -47,19 +47,35 @@ else:
             for child in node.children:
                 key = child.key.lower()
                 if key in set(['hitmisspass']):
-                    varnish_conf[cache][key] = child.values
+                    varnish_conf[cache][key] = child.values[0]
                 else:
                     logger('err', "Invalid key in block %s : %s", (cache, key))
         logger('info', str(varnish_conf))
 
-    collectd.register_config(config_callback)
-    #collectd.register_read(read_callback)
+    def read_callback():
+        global varnish_conf
+        for cache, conf in varnish_conf.items():
+            name = conf.get('name', None)
+            if name is None:
+                name = cache
+            if name == "":  # Setting is 'Name ""' meaning don't specify
+                name = None
+            logger('info', name)
+            s = stat(name)
+            if len(s) == 0:
+                logger('err', "No stats for %s" % cache)
+                continue
+            if conf.get('hitmisspass', True):
+                for k in ['cache_hit', 'cache_hitpass', 'cache_miss']:
+                    val = collectd.Values(plugin=NAME, type="absolute")
+                    val.plugin_instance = cache
+                    val.type = "absolute"
+                    val.type_instance = k
+                    val.values = [int(s['MAIN.%s' % k])]
+                    val.dispatch()
 
-"""
-MAIN.cache_hit: 924
-MAIN.cache_hitpass: 0
-MAIN.cache_miss: 79
-"""
+    collectd.register_config(config_callback)
+    collectd.register_read(read_callback)
 
 
 if __name__ == "__main__":

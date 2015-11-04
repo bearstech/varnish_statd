@@ -32,11 +32,28 @@ else:
 
     NAME = "varnish"
 
-    def config_callback(conf):
-        for node in conf.children:
-            for child in node.children:
-                pass
+    varnish_conf = dict()
 
+    def config_callback(conf):
+        global varnish_conf
+        for node in conf.children:
+            cache = None
+            if node.key == "Cache":
+                cache = node.values[0]
+                varnish_conf[cache] = dict()
+            else:
+                logger('err', "Not a valid block name :%s" % node.key)
+                continue
+            for child in node.children:
+                key = child.key.lower()
+                if key in set(['hitmisspass']):
+                    varnish_conf[cache][key] = child.values
+                else:
+                    logger('err', "Invalid key in block %s : %s", (cache, key))
+        logger('info', str(varnish_conf))
+
+    collectd.register_config(config_callback)
+    #collectd.register_read(read_callback)
 
 """
 MAIN.cache_hit: 924

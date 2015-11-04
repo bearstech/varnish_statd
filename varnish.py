@@ -1,8 +1,11 @@
 import varnishapi
 
 
-def stat(name):
-    vsc = varnishapi.VarnishStat(opt=["-n", name])
+def stat(name=None):
+    if name is None:
+        vsc = varnishapi.VarnishStat()
+    else:
+        vsc = varnishapi.VarnishStat(opt=["-n", name])
     r = vsc.getStats()
     values = dict(((k, v['val']) for k, v in r.iteritems()))
     vsc.Fini()
@@ -46,7 +49,12 @@ if __name__ == "__main__":
     import sys
     from collections import OrderedDict
 
-    for n in sys.argv[1:]:
-        values = OrderedDict(sorted(stat(n).items()))
+    if len(sys.argv) == 1:
+        values = OrderedDict(sorted(stat().items()))
         for k, v in values.iteritems():
             print("%s: %i" % (k, v))
+    else:
+        for n in sys.argv[1:]:
+            values = OrderedDict(sorted(stat(n).items()))
+            for k, v in values.iteritems():
+                print("%s: %i" % (k, v))

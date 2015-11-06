@@ -49,7 +49,7 @@ if names:
 else:
     names = (None,)
 
-wait = int(os.getenv('VARNISH_STATD_WAIT', 10))
+wait = int(os.getenv('VARNISH_STATD_WAIT', 60))
 carbon = os.getenv('CARBON_HOST', '127.0.0.1')
 stats = os.getenv("VARNISH_STATD_STATS", "hitmisspass").split(',')
 

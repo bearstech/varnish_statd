@@ -51,9 +51,10 @@ else:
 
 wait = int(os.getenv('VARNISH_STATD_WAIT', 60))
 carbon = os.getenv('CARBON_HOST', '127.0.0.1')
-stats = os.getenv("VARNISH_STATD_STATS", "hitmisspass").split(',')
+stats = os.getenv("VARNISH_STATD_STATS",
+                  "cache,backend,object,purge,vsm").split(',')
 
-queue = Queue(100)
+queue = Queue(500)
 while True:
     for n in names:
         ts = int(time.time())
@@ -63,16 +64,36 @@ while True:
             continue
         if n is None:
             n = "default"
-        if 'hitmisspass' in stats:
-            for k in ['cache_hit', 'cache_hitpass', 'cache_miss']:
+        main_keys = []
+        if 'cache' in stats:
+            main_keys.append(('cache', ['cache_hit', 'cache_hitpass',
+                                        'cache_miss']))
+        if 'backend' in stats:
+            main_keys.append(('backend', ['backend_conn', 'backend_unhealthy',
+                                          'backend_busy', 'backend_fail',
+                                          'backend_reuse', 'backend_toolate',
+                                          'backend_recycle', 'backend_retry']))
+        if 'object' in stats:
+            main_keys.append(('object', ['n_object', 'n_vampireobject',
+                                         'n_objectcore', 'n_objecthead',
+                                         'n_waitinglist', 'n_expired',
+                                         'n_lru_nuked', 'n_lru_moved']))
+        if 'purge' in stats:
+            main_keys.append(('purge', ['n_purges', 'n_obj_purged']))
+        if 'vsm' in stats:
+            main_keys.append(('vsm', ['vsm_free', 'vsm_used', 'vsm_cooling',
+                                      'vsm_overflow', 'vsm_overflowed']))
+        for category, keys in main_keys:
+            for k in keys:
                 v = s['MAIN.%s' % k]
-                print("%s: %s" % (k, v))
-                queue.put((ts, n, k, v))
+                print("%s %s: %s" % (n, k, v))
+                queue.put((ts, n, category, k, v))
+
     print("Queue size %i" % queue.qsize())
     c = CarbonClient(host=carbon)
     for _ in range(queue.qsize()):
-        line = ts, n, k, v = queue.get()
-        key = ".".join([n, k])
+        line = ts, n, category, k, v = queue.get()
+        key = ".".join([n, category, k])
         try:
             c.send(key, v, ts)
         except socket.error:

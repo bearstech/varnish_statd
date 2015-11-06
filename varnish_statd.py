@@ -8,7 +8,7 @@ from Queue import Queue
 import varnishapi
 
 
-class CarbonClient:
+class CarbonClient(object):
 
     def __init__(self, host='localhost', port=2003):
         self.host = host

@@ -14,7 +14,7 @@ class CarbonClient(object):
         self.host = host
         self.port = port
         self._socket = None
-        self.prefix = "server.%s.varnish." % socket.gethostname()
+        self.prefix = "servers.%s.localhost.varnish." % socket.gethostname()
 
     @property
     def _lazy_socket(self):

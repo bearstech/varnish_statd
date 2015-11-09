@@ -1,0 +1,16 @@
+[Unit]
+Description=Varnish stat daemon
+After=network.target
+Documentation=https://github.com/bearstech/varnish_statd
+
+[Service]
+User=varnish
+EnvironmentFile=/etc/default/varnishstatd
+WorkingDirectory=/opt/varnishstatd
+ExecStart=/usr/bin/python2.7 varnishstatd.py
+KillMode=process
+Restart=on-failure
+CPUAccounting=true
+
+[Install]
+WantedBy=multi-user.target
